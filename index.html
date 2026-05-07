@@ -1846,7 +1846,6 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
       <div class="profile-page-header">
         <div class="profile-page-avatar-wrap">
           <div class="profile-page-avatar" id="profile-page-avatar-display">🏏</div>
-          <div class="profile-page-avatar-edit">✏️</div>
         </div>
         <div class="profile-page-name" id="profile-page-name-display">PLAYER</div>
         <div class="profile-page-email" id="profile-page-email-display">—</div>
@@ -3289,7 +3288,27 @@ function renderTracker() {
 }
 function deleteMatch(id){
   showConfirm('Delete this match? This cannot be undone.', ()=>{
+    // If the deleted match owns the last commentary, clear it
+    const deletedMatch = matches.find(m => m.id === id);
+    if (deletedMatch && deletedMatch.commentary && deletedMatch.commentary === lastCommentary) {
+      lastCommentary = '';
+      localStorage.setItem(COMM_STORE, '');
+    }
     matches=matches.filter(m=>m.id!==id);
+    // After deletion, update lastCommentary to the new most-recent match's commentary
+    if (matches.length > 0) {
+      const newLast = [...matches].sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+      if (newLast && newLast.commentary) {
+        lastCommentary = newLast.commentary;
+        localStorage.setItem(COMM_STORE, lastCommentary);
+      } else {
+        lastCommentary = '';
+        localStorage.setItem(COMM_STORE, '');
+      }
+    } else {
+      lastCommentary = '';
+      localStorage.setItem(COMM_STORE, '');
+    }
     localStorage.setItem(STORE,JSON.stringify(matches));
     saveToFirestore(); // ☁️ sync deletion to Firebase
     refreshAll();
@@ -4345,14 +4364,79 @@ function handleProfileModalImageUpload(input) {
     const dataUrl = e.target.result;
     const avatarEl = document.getElementById('profile-avatar-big');
     if (avatarEl) avatarEl.innerHTML = `<img src="${dataUrl}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    // ✅ FIX: Immediately persist avatar to localStorage + Firestore
-    const name = (document.getElementById('profile-name-input') || {}).value || '';
-    setAppProfile({ name: name.trim(), avatar: dataUrl });
-    showAuthUI(currentUser);
   };
   reader.readAsDataURL(file);
   input.value = '';
 }
+// ── Compress image to tiny base64 (fits in Firestore, free plan) ──
+function compressImage(dataUrl, maxSize, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      // Scale down to maxSize px on longest side
+      let w = img.width, h = img.height;
+      if (w > h && w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; }
+      else if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; }
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      // Try progressively lower quality until under 40KB
+      let q = quality || 0.7;
+      let result = canvas.toDataURL('image/jpeg', q);
+      while (result.length > 40000 && q > 0.1) {
+        q -= 0.1;
+        result = canvas.toDataURL('image/jpeg', q);
+      }
+      resolve(result);
+    };
+    img.src = dataUrl;
+  });
+}
+
+function handleProfileModalImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    showToast('Saving photo…', true);
+    const compressed = await compressImage(e.target.result, 120, 0.7);
+    // Show preview
+    const avatarEl = document.getElementById('profile-avatar-big');
+    if (avatarEl) avatarEl.innerHTML = `<img src="${compressed}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    // Save compressed base64 — fits in Firestore
+    const name = (document.getElementById('profile-name-input') || {}).value || '';
+    setAppProfile({ name: name.trim(), avatar: compressed });
+    showAuthUI(currentUser);
+    showToast('Photo saved! ✓', true);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function handleProfilePageImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    showToast('Saving photo…', true);
+    const compressed = await compressImage(e.target.result, 120, 0.7);
+    // Show preview
+    const avatarEl = document.getElementById('profile-page-avatar-display');
+    if (avatarEl) avatarEl.innerHTML = `<img src="${compressed}" alt="avatar">`;
+    renderProfilePageEmojiGrid('');
+    // Save compressed base64 — fits in Firestore
+    const nameInput = document.getElementById('profile-page-name-input');
+    const name = nameInput ? nameInput.value.trim() : '';
+    setAppProfile({ name, avatar: compressed });
+    showAuthUI(currentUser);
+    renderProfilePage();
+    showToast('Photo saved! ✓', true);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
 function toggleEmojiPicker() {
   const wrap = document.getElementById('emoji-picker-wrap');
   wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
@@ -4458,11 +4542,6 @@ function handleProfilePageImageUpload(input) {
     if (avatarEl) avatarEl.innerHTML = `<img src="${dataUrl}" alt="avatar">`;
     // Deselect all emoji options
     renderProfilePageEmojiGrid('');
-    // FIX: Immediately persist avatar to localStorage + Firestore
-    const nameInput = document.getElementById('profile-page-name-input');
-    const name = nameInput ? nameInput.value.trim() : '';
-    setAppProfile({ name, avatar: dataUrl });
-    showAuthUI(currentUser);
   };
   reader.readAsDataURL(file);
   input.value = '';
