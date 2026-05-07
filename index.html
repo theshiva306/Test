@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🏏 SHIVA — ODI Career v9</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 
 <!-- ══ FIREBASE ══ -->
 <script type="module">
@@ -259,7 +260,13 @@ body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-
 .pill-btn{padding:6px 20px;border-radius:24px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;color:var(--muted);cursor:pointer;border:none;background:none;transition:all .2s}
 .pill-btn.active{background:var(--gold);color:#06090d;font-weight:600}
 
-
+/* ── SVG LINE GRAPHS ── */
+.graph-section{margin-top:1.5rem}
+.graph-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:.625rem;display:flex;align-items:center;gap:6px}
+.graph-title::after{content:'';flex:1;height:0.5px;background:var(--border)}
+.graph-wrap{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:1rem 1.25rem 1.25rem;margin-bottom:1rem;position:relative;overflow:hidden}
+.graph-svg{width:100%;height:auto;min-height:160px;overflow:visible;display:block}
+.graph-no-data{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);text-align:center;padding:2rem 0;letter-spacing:1px}
 
 /* ── BOTTOM TAB BAR — mobile only ── */
 .bottom-tabs{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(6,9,13,0.98);backdrop-filter:blur(20px);border-top:0.5px solid var(--border2);align-items:stretch;height:56px}
@@ -270,12 +277,16 @@ body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-
 .tab-icon{font-size:18px;line-height:1}
 .tab-label{font-size:8px;letter-spacing:1.2px;text-transform:uppercase}
 
+/* ── BOTTOM BACKUP BAR (hidden — replaced by tab bar) ── */
+.backup-bar{display:none}
+.backup-btn{display:none}
 
 /* ── RESPONSIVE ── */
 @media(max-width:700px){
   .sidebar{transform:translateX(calc(-1 * var(--sidebar-expanded)));width:var(--sidebar-expanded);}
   .sidebar.open{transform:translateX(0);}
   .sidebar.expanded{width:var(--sidebar-expanded);}
+  .sidebar-toggle{display:none;}
   .main-wrap{margin-left:0 !important;}
   .top-bar{display:flex;}
   .page{padding:1rem 1rem 5rem;padding-top:4rem;}
@@ -479,6 +490,51 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .mc-average{background:rgba(74,158,255,0.1);border-color:var(--blue)!important;color:var(--blue)!important}
 .mc-poor{background:rgba(255,255,255,0.04);border-color:var(--border)!important}
 .mc-lost{background:rgba(224,80,80,0.1);border-color:var(--red)!important;color:var(--red)!important}
+
+/* ── MONTHLY LINE GRAPH ── */
+.monthly-graph-wrap{
+  background:var(--card);border:0.5px solid var(--border);border-radius:14px;
+  padding:1.25rem 1.25rem 1rem;margin-top:1.25rem;position:relative;overflow:hidden;
+}
+.monthly-graph-wrap::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(6,182,212,0.4),transparent);
+}
+.monthly-graph-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;
+}
+.monthly-graph-title{
+  font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;
+  color:var(--muted);text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+}
+.monthly-graph-title::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--cyan);display:inline-block;flex-shrink:0;}
+.monthly-graph-badge{
+  font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;
+  padding:3px 10px;border-radius:10px;
+  background:rgba(6,182,212,0.08);border:0.5px solid rgba(6,182,212,0.25);color:var(--cyan);
+}
+.monthly-graph-canvas-wrap{
+  position:relative;width:100%;
+  /* height is controlled by canvas aspect ratio */
+}
+.monthly-graph-canvas-wrap canvas{
+  display:block;width:100%!important;
+}
+.monthly-graph-empty{
+  font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);
+  text-align:center;padding:2.5rem 0;letter-spacing:1px;
+}
+/* Tooltip override */
+#monthly-chart-tooltip{
+  position:fixed;pointer-events:none;z-index:999;
+  background:var(--card2);border:0.5px solid var(--border2);
+  border-radius:8px;padding:6px 12px;
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--text);white-space:nowrap;
+  box-shadow:0 6px 24px rgba(0,0,0,.5);
+  display:none;
+}
 
 /* FILTER BTNS */
 .filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
@@ -803,7 +859,21 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .ach-badge{display:inline-flex;align-items:center;gap:4px;margin-top:7px;padding:3px 7px;background:rgba(245,200,66,0.12);border:0.5px solid rgba(245,200,66,0.25);border-radius:20px;font-family:'DM Mono',monospace;font-size:7px;color:var(--gold);letter-spacing:.5px}
 .ach-pct{font-family:'DM Mono',monospace;font-size:7px;color:var(--muted2);margin-top:3px}
 
-/* RIVALS — old bar-style classes removed (now uses .rival-section system) */
+/* RIVALS */
+.rival-card{background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:.75rem}
+.rival-header{display:flex;align-items:center;gap:.625rem;margin-bottom:.75rem}
+.rival-icon{font-size:18px}.rival-name{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px}
+.rival-team{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px}
+.rival-avg-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--muted);margin-left:auto}
+.rival-avg-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted2);text-align:right}
+.rival-vs{display:flex;align-items:center;gap:.5rem;margin-bottom:4px}
+.rival-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);min-width:38px;letter-spacing:.5px}
+.rival-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden}
+.rival-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.rival-bar-fill.you{background:linear-gradient(90deg,var(--fire),var(--gold))}
+.rival-bar-fill.them{background:var(--muted2)}
+.rival-result{font-family:'DM Mono',monospace;font-size:10px;margin-top:.5rem;padding:3px 0}
+.rival-result.winning{color:var(--green)}.rival-result.losing{color:var(--red)}
 
 /* MILESTONE */
 .milestone{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.85);opacity:0;pointer-events:none;z-index:200;background:linear-gradient(135deg,#0a1020,#141c30);border:1px solid var(--gold);border-radius:16px;padding:2rem 2.5rem;text-align:center;transition:opacity .3s,transform .3s cubic-bezier(.34,1.4,.64,1)}
@@ -814,6 +884,28 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(16px);opacity:0;pointer-events:none;z-index:300;font-family:'DM Mono',monospace;font-size:11px;padding:8px 18px;border-radius:8px;border:0.5px solid;transition:opacity .25s,transform .25s;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* HEATMAP */
+.heatmap-wrap{overflow-x:auto;padding-bottom:.5rem}
+.heatmap-grid{display:flex;gap:3px;align-items:flex-start}
+.heatmap-col{display:flex;flex-direction:column;gap:3px}
+.heatmap-cell{width:12px;height:12px;border-radius:2px;cursor:pointer;flex-shrink:0;transition:transform .1s,box-shadow .1s;position:relative}
+.heatmap-cell:hover{transform:scale(1.4);z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.heatmap-cell.hm-empty{background:rgba(255,255,255,0.04)}
+.heatmap-cell.hm-none{background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.04)}
+.heatmap-cell.hm-poor{background:rgba(107,114,128,0.4)}
+.heatmap-cell.hm-average{background:rgba(74,158,255,0.5)}
+.heatmap-cell.hm-half{background:rgba(46,204,138,0.6)}
+.heatmap-cell.hm-century{background:rgba(245,200,66,0.75)}
+.heatmap-cell.hm-double{background:rgba(6,182,212,0.85)}
+.heatmap-cell.hm-bigknock{background:rgba(99,210,255,0.7)}
+.heatmap-cell.hm-legendary{background:rgba(168,85,247,1);box-shadow:0 0 6px rgba(168,85,247,.5)}
+.heatmap-month-labels{display:flex;gap:3px;margin-bottom:4px}
+.hm-month-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted2);letter-spacing:.5px;min-width:12px;white-space:nowrap}
+.hm-day-labels{display:flex;flex-direction:column;gap:3px;margin-right:5px;padding-top:18px}
+.hm-day-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted2);height:12px;line-height:12px;width:18px;text-align:right}
+.heatmap-legend{display:flex;align-items:center;gap:6px;margin-top:.875rem;flex-wrap:wrap}
+.hm-leg-cell{width:10px;height:10px;border-radius:2px}
+.hm-leg-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted2);letter-spacing:.5px}
 
 /* GOAL TRACKER */
 .goal-card{background:linear-gradient(135deg,#0a0f1a,#0f1825);border:0.5px solid var(--border2);border-radius:12px;padding:1.25rem;margin-bottom:1rem;position:relative;overflow:hidden}
@@ -826,7 +918,17 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .goal-progress-fill{height:100%;background:linear-gradient(90deg,var(--fire),var(--gold));border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 @media(max-width:700px){.goal-stat-val{font-size:18px}.goal-stats{gap:.4rem}}
 
+/* AI WEEKLY COMMENTARY (kept for .weekly-ai-btn class in case cached) */
+.weekly-ai-btn{display:none}
 
+/* ── LOGIN GATE ── */
+.login-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:2rem}
+.login-gate-icon{font-size:48px;margin-bottom:1rem}
+.login-gate-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;color:var(--gold);margin-bottom:.5rem}
+.login-gate-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:1.5rem;line-height:1.7}
+.login-gate-btn{padding:12px 32px;background:transparent;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;cursor:pointer;transition:all .2s}
+.login-gate-btn:hover{background:var(--gold);color:#06090d}
+.sync-indicator{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:1px;padding:.25rem .75rem;background:rgba(255,255,255,0.03);border-radius:4px;display:inline-block;margin-top:.5rem}
 
 /* ── GLOBAL LEADERBOARD ── */
 .lb-header{background:linear-gradient(135deg,#07111f,#0d1e35,#07111f);border:0.5px solid var(--border2);border-radius:16px;padding:1.5rem 1.75rem;margin-bottom:1.25rem;position:relative;overflow:hidden}
@@ -1919,6 +2021,20 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
     </div>
   </div>
   <div class="stats-grid" id="month-breakdown-pg" style="margin-top:1rem"></div>
+
+  <!-- ── MONTHLY LINE GRAPH ── -->
+  <div class="monthly-graph-wrap" id="monthly-graph-section">
+    <div class="monthly-graph-header">
+      <div class="monthly-graph-title">Questions Solved — Daily Trend</div>
+      <div class="monthly-graph-badge" id="monthly-graph-peak-badge"></div>
+    </div>
+    <div class="monthly-graph-canvas-wrap" id="monthly-graph-canvas-wrap">
+      <canvas id="monthly-line-chart" height="180"></canvas>
+      <div class="monthly-graph-empty" id="monthly-graph-empty" style="display:none">No match data for this month yet</div>
+    </div>
+  </div>
+  <!-- Floating tooltip -->
+  <div id="monthly-chart-tooltip"></div>
 </div>
 
 <!-- ══ PAGE: GRAPHS ══ (Career Goal only) -->
@@ -2043,7 +2159,9 @@ window.addEventListener('load', () => {
   setTimeout(initFirebase, 200);
 });
 
-
+window.addEventListener('resize', ()=>{
+  // resize handled natively by CSS flex/grid
+});
 
 function initFirebase() {
   const fb = window._fb;
@@ -2355,6 +2473,17 @@ const ODI_LEGENDS = [
   },
 ];
 
+// Rivals for basic comparison (career avg)
+const RIVALS = [
+  { name: 'Virat Kohli',      team: 'India',   avg: 58.0, icon: '👑' },
+  { name: 'Babar Azam',       team: 'Pakistan',avg: 57.4, icon: '🏏' },
+  { name: 'AB de Villiers',   team: 'SA',      avg: 53.5, icon: '⚡' },
+  { name: 'MS Dhoni',         team: 'India',   avg: 50.6, icon: '🦁' },
+  { name: 'Rohit Sharma',     team: 'India',   avg: 49.0, icon: '🎯' },
+  { name: 'Ricky Ponting',    team: 'Aus',     avg: 42.0, icon: '🦘' },
+  { name: 'Sachin Tendulkar', team: 'India',   avg: 44.8, icon: '🐐' },
+  { name: 'Sourav Ganguly',   team: 'India',   avg: 41.0, icon: '🔥' },
+];
 
 // ══════════════════════════════════════
 // SCORING ENGINE v3 (UNCHANGED)
@@ -2457,6 +2586,34 @@ function getCareerRank(xp) {
 }
 function getTotalXP() { return matches.reduce((s,m)=>s+Math.max(0,m.total),0); }
 
+// ══════════════════════════════════════
+// ACHIEVEMENTS
+// ══════════════════════════════════════
+const ACHIEVEMENTS = [
+  { id:'first_match',   icon:'🏏', name:'First Match',       desc:'Play your first match',                     check:(ms)=>ms.length>=1 },
+  { id:'first_fifty',   icon:'🙌', name:'First Fifty',        desc:'Score 50+ runs',                            check:(ms)=>ms.some(m=>m.total>=50) },
+  { id:'first_ton',     icon:'🏆', name:'First Century',      desc:'Score 100+ runs',                           check:(ms)=>ms.some(m=>m.total>=100) },
+  { id:'first_150',     icon:'🔵', name:'Big Knock',          desc:'Score 150+ runs in a match',                    check:(ms)=>ms.some(m=>m.total>=150) },
+  { id:'first_200',     icon:'💜', name:'Double Century',      desc:'Score 200+ runs in a match',                    check:(ms)=>ms.some(m=>m.total>=200) },
+  { id:'rohit_264',     icon:'⚡', name:"Rohit's Record",     desc:'Score 264+ — the ultimate feat',            check:(ms)=>ms.some(m=>m.total>=264) },
+  { id:'ten_matches',   icon:'📅', name:'10 Matches',         desc:'Play 10 matches',                           check:(ms)=>ms.length>=10 },
+  { id:'twenty_five',   icon:'🎖️', name:'25 Matches',        desc:'Play 25 matches',                           check:(ms)=>ms.length>=25 },
+  { id:'fifty_matches', icon:'🎖️', name:'50 Matches',        desc:'Play 50 matches',                           check:(ms)=>ms.length>=50 },
+  { id:'ton_matches',   icon:'💯', name:'100 Matches',        desc:'Play 100 matches',                          check:(ms)=>ms.length>=100 },
+  { id:'streak_3',      icon:'🔥', name:'On Fire',            desc:'3 centuries in a row',                      check:(ms)=>getLongestStreak(ms)>=3 },
+  { id:'streak_7',      icon:'🌋', name:'Unstoppable',        desc:'7 centuries in a row',                      check:(ms)=>getLongestStreak(ms)>=7 },
+  { id:'streak_10',     icon:'⚡', name:'Ironman',            desc:'10 centuries in a row',                     check:(ms)=>getLongestStreak(ms)>=10 },
+  { id:'perfect_day',   icon:'✨', name:'Perfect Day',        desc:'All lifestyle habits completed',            check:(ms)=>ms.some(m=>m.lifeRaw>=56) },
+  { id:'avg_50',        icon:'👑', name:'Kohli Average',      desc:'Batting avg above 50 (min 10 matches)',     check:(ms)=>ms.length>=10&&(ms.reduce((s,m)=>s+m.total,0)/ms.length)>=50 },
+  { id:'avg_58',        icon:'🐐', name:'Best in the World',  desc:'Batting avg above 58 (min 10 matches)',     check:(ms)=>ms.length>=10&&(ms.reduce((s,m)=>s+m.total,0)/ms.length)>=58 },
+  { id:'12h_day',       icon:'⏰', name:'Marathon Innings',   desc:'Study 12+ hours in a day',                  check:(ms)=>ms.some(m=>m.hours>=12) },
+  { id:'200q_day',      icon:'📝', name:'Question Machine',   desc:'Solve 200+ questions in a day',            check:(ms)=>ms.some(m=>m.questions>=200) },
+  { id:'ahead_sachin',  icon:'🐐', name:'Ahead of Sachin',   desc:'Your avg higher than Sachin at same stage', check:(ms)=>checkAheadOf(ms,'Sachin Tendulkar','avg') },
+  { id:'ahead_virat',   icon:'👑', name:'Ahead of Virat',    desc:'Your avg higher than Virat at same stage',  check:(ms)=>checkAheadOf(ms,'Virat Kohli','avg') },
+  { id:'5000_runs',     icon:'💰', name:'5000 Runs',          desc:'Score 5000 career runs',                    check:(ms)=>ms.reduce((s,m)=>s+Math.max(0,m.total),0)>=5000 },
+  { id:'10000_runs',    icon:'🏛️', name:'10000 Runs',        desc:'Score 10000 career runs',                   check:(ms)=>ms.reduce((s,m)=>s+Math.max(0,m.total),0)>=10000 },
+];
+
 function getLongestStreak(ms) {
   const sorted=[...ms].sort((a,b)=>new Date(a.date)-new Date(b.date));
   let max=0,cur=0;
@@ -2555,7 +2712,7 @@ function saveMatch() {
 
   const s     = calcRuns(hours,questions,lifeRaw,penTotal,matches);
   const grade = getGrade(s.total);
-  const prev  = ACHIEVEMENTS_V2.filter(a=>a.check(matches)).map(a=>a.id);
+  const prev  = ACHIEVEMENTS.filter(a=>a.check(matches)).map(a=>a.id);
 
   const match = {
     id:Date.now(), matchNo, date, hours, questions,
@@ -2577,7 +2734,7 @@ function saveMatch() {
   else if (s.total>=100) showMilestone('🏆','CENTURY!',s.total.toFixed(0)+' runs — Elite performance!');
   else if (s.total>=50)  showMilestone('💪','HALF CENTURY!',s.total.toFixed(0)+' runs — Solid day!');
 
-  const newAch = ACHIEVEMENTS_V2.filter(a=>!prev.includes(a.id)&&a.check(matches));
+  const newAch = ACHIEVEMENTS.filter(a=>!prev.includes(a.id)&&a.check(matches));
   if (newAch.length) {
     setTimeout(()=>showMilestone('🏅','ACHIEVEMENT UNLOCKED!',newAch.map(a=>a.icon+' '+a.name).join(' · ')),4500);
   }
@@ -3131,7 +3288,16 @@ function renderRaceBoard() {
   }).join('') || '<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--muted2);padding:1rem">Log a match to see your highest score here</div>';
 }
 
+// renderDressingRoom() — removed (dead code, no page references it)
 
+function toggleDrDetail(name) {
+  const key = name.replace(/[^a-z]/gi,'_');
+  const el  = document.getElementById('dr-detail-'+key);
+  if (!el) return;
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.dr-detail').forEach(d=>d.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
 
 // ══════════════════════════════════════
 // TRACKER
@@ -3219,6 +3385,44 @@ function renderWeekly() {
 // ══════════════════════════════════════
 // MONTHLY
 // ══════════════════════════════════════
+function renderMonthly() {
+  const y=viewMonth.getFullYear(),m=viewMonth.getMonth();
+  document.getElementById('month-title').textContent=viewMonth.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const dim=new Date(y,m+1,0).getDate(),fd=new Date(y,m,1).getDay();
+  const offset=fd===0?6:fd-1;
+  const mm=matches.filter(x=>{const d=new Date(x.date+' ');return d.getFullYear()===y&&d.getMonth()===m;});
+  const tots=mm.map(x=>x.total),mTotal=tots.reduce((a,b)=>a+b,0),mAvg=tots.length?mTotal/tots.length:0;
+  document.getElementById('m-total').textContent=Math.round(mTotal);
+  document.getElementById('m-avg').textContent=mAvg.toFixed(1);
+  document.getElementById('m-cent').textContent=mm.filter(x=>x.total>=100).length;
+  document.getElementById('m-played').textContent=mm.length;
+  const today=new Date().toISOString().split('T')[0];
+  const grid=document.getElementById('month-grid');
+  const dl=['M','T','W','T','F','S','S'];
+  let html=dl.map(d=>`<div class="month-cell day-label">${d}</div>`).join('');
+  for(let i=0;i<offset;i++) html+=`<div class="month-cell empty"></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dmAll=matches.filter(x=>x.date===ds);
+    const dm=dmAll.length?dmAll.reduce((best,x)=>x.total>best.total?x:best,dmAll[0]):null;
+    const isToday=ds===today;
+    if(dm){const g=getGrade(dm.total);const tip=dm.reflection?`${dm.total.toFixed(0)} runs · ${dm.reflection}`:dm.total.toFixed(0)+' runs';html+=`<div class="month-cell mc-${g.key}${isToday?' today':''}" title="${tip}">${d}</div>`;}
+    else html+=`<div class="month-cell${isToday?' today':''}" style="color:var(--muted2)">${d}</div>`;
+  }
+  grid.innerHTML=html;
+  const grades={legendary:0,double:0,bigknock:0,century:0,half:0,average:0,poor:0,lost:0};
+  mm.forEach(x=>grades[x.grade]++);
+  document.getElementById('month-breakdown').innerHTML=[
+    {label:'⚡ Legendary',val:grades.legendary,cls:'purple'},
+    {label:'💜 Double Centuries 200+',val:grades.double,cls:'blue'},
+    {label:'🔵 Big Knocks 150+',val:grades.bigknock,cls:''},
+    {label:'🏆 Centuries',val:grades.century,cls:'gold'},
+    {label:'💪 Half Centuries',val:grades.half,cls:'green'},
+    {label:'📘 Average Days',val:grades.average,cls:''},
+    {label:'Matches Played',val:mm.length,cls:'fire'},
+  ].map(r=>`<div class="stat-card"><div class="stat-label">${r.label}</div><div class="stat-val ${r.cls}">${r.val}</div></div>`).join('');
+}
+function changeMonth(dir){viewMonth.setMonth(viewMonth.getMonth()+dir);renderMonthlyPage();}
 function changeMonthPage(dir){viewMonth.setMonth(viewMonth.getMonth()+dir);renderMonthlyPage();}
 
 // ══ MONTHLY PAGE RENDER ══
@@ -3262,7 +3466,203 @@ function renderMonthlyPage(){
     {label:'📘 Average Days',val:grades.average,cls:''},
     {label:'Matches Played',val:mm.length,cls:'fire'},
   ].map(r=>`<div class="stat-card"><div class="stat-label">${r.label}</div><div class="stat-val ${r.cls}">${r.val}</div></div>`).join('');
+
+  // ── Draw monthly line graph ───────────────────────────────────────────
+  if (typeof renderMonthlyLineGraph === 'function') {
+    requestAnimationFrame(renderMonthlyLineGraph);
+  }
 }
+
+// ══════════════════════════════════════
+// MONTHLY LINE GRAPH — Chart.js
+// ══════════════════════════════════════
+(function(){
+  let _monthlyChart = null;
+  let _chartReady   = false;
+
+  function waitForChartJS(cb, attempts) {
+    attempts = attempts || 0;
+    if (typeof Chart !== 'undefined') { cb(); return; }
+    if (attempts > 50) { console.warn('Chart.js did not load'); return; }
+    setTimeout(function(){ waitForChartJS(cb, attempts + 1); }, 150);
+  }
+
+  waitForChartJS(function(){
+    _chartReady = true;
+    // If monthly page is already active at load time, draw immediately
+    const pg = document.getElementById('page-monthly');
+    if (pg && pg.classList.contains('active')) {
+      requestAnimationFrame(renderMonthlyLineGraph);
+    }
+  });
+
+  window.renderMonthlyLineGraph = function() {
+    if (!_chartReady || typeof Chart === 'undefined') return;
+
+    const canvas  = document.getElementById('monthly-line-chart');
+    const emptyEl = document.getElementById('monthly-graph-empty');
+    const badgeEl = document.getElementById('monthly-graph-peak-badge');
+    if (!canvas) return;
+
+    const y   = viewMonth.getFullYear();
+    const m   = viewMonth.getMonth();
+    const dim = new Date(y, m + 1, 0).getDate();
+
+    // Build daily arrays
+    const labels = [];
+    const values = [];
+    let hasData  = false;
+    let peakQ    = 0;
+    let peakDay  = null;
+
+    for (let d = 1; d <= dim; d++) {
+      const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      labels.push(d);
+      const dayMatches = matches.filter(x => x.date === ds);
+      let q = 0;
+      dayMatches.forEach(x => { q += (parseFloat(x.questions) || 0); });
+      q = Math.round(q);
+      values.push(q);
+      if (q > 0) hasData = true;
+      if (q > peakQ) { peakQ = q; peakDay = d; }
+    }
+
+    canvas.style.display = hasData ? 'block' : 'none';
+    if (emptyEl) emptyEl.style.display = hasData ? 'none' : 'block';
+    if (badgeEl) badgeEl.textContent = hasData ? `Peak: ${peakQ}Q · Day ${peakDay}` : '';
+
+    // Destroy old chart cleanly
+    if (_monthlyChart) {
+      try { _monthlyChart.destroy(); } catch(e){}
+      _monthlyChart = null;
+    }
+    if (!hasData) return;
+
+    // Ensure canvas has height before we draw
+    if (!canvas.offsetParent) return; // not visible yet — skip
+    const ctx = canvas.getContext('2d');
+
+    // Gradient fill using canvas actual height
+    const canvasH = canvas.offsetHeight || 180;
+    const grad = ctx.createLinearGradient(0, 0, 0, canvasH);
+    grad.addColorStop(0,   'rgba(6,182,212,0.25)');
+    grad.addColorStop(0.55,'rgba(6,182,212,0.07)');
+    grad.addColorStop(1,   'rgba(6,182,212,0)');
+
+    let tipEl = document.getElementById('monthly-chart-tooltip');
+    if (!tipEl) {
+      tipEl = document.createElement('div');
+      tipEl.id = 'monthly-chart-tooltip';
+      document.body.appendChild(tipEl);
+    }
+
+    const isMobile = window.innerWidth < 500;
+    const tickStep = isMobile ? 4 : (window.innerWidth < 768 ? 3 : 2);
+
+    _monthlyChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Questions Solved',
+          data: values,
+          borderColor: 'rgba(6,182,212,0.92)',
+          borderWidth: 2,
+          backgroundColor: grad,
+          fill: true,
+          tension: 0.38,
+          pointRadius: values.map(v => v > 0 ? 3.5 : 1.5),
+          pointBackgroundColor: values.map((v, i) => {
+            if (v === peakQ && v > 0) return '#fad96a';
+            return v > 0 ? 'rgba(6,182,212,1)' : 'rgba(255,255,255,0.08)';
+          }),
+          pointBorderColor: 'transparent',
+          pointHoverRadius: 5.5,
+          pointHoverBackgroundColor: '#fad96a',
+          spanGaps: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: false,
+            external({ tooltip }) {
+              if (!tipEl) return;
+              if (tooltip.opacity === 0) { tipEl.style.display = 'none'; return; }
+              const dp    = tooltip.dataPoints[0];
+              const day   = dp.label;
+              const q     = dp.raw;
+              const mon   = viewMonth.toLocaleDateString('en-IN',{month:'short',year:'numeric'});
+              tipEl.innerHTML =
+                `<span style="color:var(--cyan);font-size:9px;letter-spacing:1px">DAY ${day} · ${mon}</span>` +
+                `<br><span style="color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px">${q}</span>` +
+                `<span style="color:var(--muted);font-size:9px"> questions</span>`;
+              const rect = canvas.getBoundingClientRect();
+              let lx = rect.left + tooltip.caretX + 14;
+              if (lx + 160 > window.innerWidth - 8) lx = rect.left + tooltip.caretX - 174;
+              tipEl.style.left    = lx + 'px';
+              tipEl.style.top     = (rect.top + tooltip.caretY - 36) + 'px';
+              tipEl.style.display = 'block';
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            border: { color: 'transparent' },
+            ticks: {
+              color: 'rgba(106,128,160,0.75)',
+              font: { family:"'DM Mono',monospace", size: 9 },
+              maxRotation: 0,
+              autoSkip: false,
+              callback(val, idx) {
+                const lbl = labels[idx];
+                if (lbl === 1 || lbl === dim || lbl % tickStep === 0) return lbl;
+                return '';
+              }
+            }
+          },
+          y: {
+            position: 'left',
+            grid: { color: 'rgba(255,255,255,0.045)' },
+            border: { color: 'transparent' },
+            ticks: {
+              color: 'rgba(106,128,160,0.75)',
+              font: { family:"'DM Mono',monospace", size: 9 },
+              maxTicksLimit: 5,
+              callback: v => v === 0 ? '0' : v + 'Q'
+            },
+            beginAtZero: true,
+            suggestedMin: 0
+          }
+        },
+        animation: { duration: 550, easing: 'easeOutCubic' },
+        layout: { padding: { top: 8, right: 4, bottom: 2, left: 0 } }
+      }
+    });
+  };
+
+  // Resize: redraw on orientation/size change
+  let _rTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rTimer);
+    _rTimer = setTimeout(() => {
+      const pg = document.getElementById('page-monthly');
+      if (pg && pg.classList.contains('active')) renderMonthlyLineGraph();
+    }, 220);
+  });
+
+  // Hide tooltip on scroll
+  document.addEventListener('scroll', () => {
+    const t = document.getElementById('monthly-chart-tooltip');
+    if (t) t.style.display = 'none';
+  }, true);
+
+})();
 
 // ══════════════════════════════════════
 // RECORDS PAGE
@@ -3518,10 +3918,90 @@ function refreshAll(){
 }
 
 // ══════════════════════════════════════
-// GOAL TRACKER DATA
+// FEATURE 14: STREAK HEATMAP
 // ══════════════════════════════════════
 const GOAL_STORE = 'shiva45_goal_v1';
 let goalData = JSON.parse(localStorage.getItem(GOAL_STORE)||'null');
+
+function renderHeatmap() {
+  const grid = document.getElementById('heatmap-grid');
+  const monthLabels = document.getElementById('hm-month-labels');
+  if (!grid) return;
+
+  // Build 52 weeks of dates ending today
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  // Start from the Monday 52 weeks ago
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - (today.getDay()===0?6:today.getDay()-1) - 51*7);
+
+  // Build a map of date->match
+  const matchMap = {};
+  matches.forEach(m=>{ matchMap[m.date] = m; });
+
+  // Build 52 columns (weeks), each 7 cells (Mon-Sun)
+  let gridHTML = '';
+  let monthLabelHTML = '';
+  let lastMonth = -1;
+
+  for (let w = 0; w < 52; w++) {
+    gridHTML += '<div class="heatmap-col">';
+    const weekStart = new Date(startDate);
+    weekStart.setDate(startDate.getDate() + w*7);
+    // Month label
+    if (weekStart.getMonth() !== lastMonth) {
+      lastMonth = weekStart.getMonth();
+      const mName = weekStart.toLocaleDateString('en-IN',{month:'short'});
+      monthLabelHTML += `<div class="hm-month-label" style="min-width:${12*1+3*(Math.max(0,(new Date(weekStart.getFullYear(),weekStart.getMonth()+1,0).getDate()/7)|0)-1)}px">${mName}</div>`;
+    } else {
+      monthLabelHTML += '<div class="hm-month-label" style="min-width:15px"></div>';
+    }
+    for (let d = 0; d < 7; d++) {
+      const cellDate = new Date(weekStart);
+      cellDate.setDate(weekStart.getDate() + d);
+      cellDate.setHours(0,0,0,0);
+      if (cellDate > today) {
+        gridHTML += '<div class="heatmap-cell hm-empty"></div>';
+        continue;
+      }
+      const ds = cellDate.toISOString().split('T')[0];
+      const m = matchMap[ds];
+      let cls = 'hm-none', tipText = cellDate.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+' · No match';
+      if (m) {
+        const g = getGrade(m.total);
+        cls = g.key==='legendary'?'hm-legendary':g.key==='double'?'hm-double':g.key==='bigknock'?'hm-bigknock':g.key==='century'?'hm-century':g.key==='half'?'hm-half':g.key==='average'?'hm-average':'hm-poor';
+        tipText = cellDate.toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ' · ' + m.total.toFixed(0) + ' runs · ' + g.label.replace(/^[^ ]+ /,'') + (m.reflection ? '\n"'+m.reflection+'"' : '');
+      }
+      gridHTML += `<div class="heatmap-cell ${cls}" data-tip="${tipText.replace(/"/g,'&quot;')}" onmouseenter="showHmTip(event,this)" onmouseleave="hideHmTip()"></div>`;
+    }
+    gridHTML += '</div>';
+  }
+
+  grid.innerHTML = gridHTML;
+  monthLabels.innerHTML = monthLabelHTML;
+
+  // Stats
+  const allDays = Object.keys(matchMap).length;
+  const activeWeeks = new Set(matches.map(m=>getWeekKeyFromDate(m.date))).size;
+  const longestStreak = getLongestStreak(matches);
+  const centuryDays = matches.filter(m=>m.total>=100).length;
+  document.getElementById('hm-stats').innerHTML = [
+    {label:'Days Played',val:allDays,cls:'gold'},
+    {label:'Active Weeks',val:activeWeeks,cls:'green'},
+    {label:'Longest Streak',val:longestStreak+' 🔥',cls:'fire'},
+    {label:'Century Days',val:centuryDays,cls:'purple'},
+  ].map(r=>`<div class="stat-card"><div class="stat-label">${r.label}</div><div class="stat-val ${r.cls}">${r.val}</div></div>`).join('');
+
+  // Goal tracker
+  renderGoal();
+}
+
+function getWeekKeyFromDate(ds) {
+  const d = new Date(ds+'T00:00:00');
+  const day = d.getDay(), mon = new Date(d);
+  mon.setDate(d.getDate()-(day===0?6:day-1));
+  return mon.toISOString().split('T')[0];
+}
 
 
 // ══════════════════════════════════════
@@ -3680,10 +4160,149 @@ function goHome() {
   }
 })();
 
+// ══════════════════════════════════════
+// ANALYSIS PILL TOGGLE
+// ══════════════════════════════════════
+// switchAnalysis removed — weekly/monthly are now separate tab pages
 
+// ══════════════════════════════════════
+// MONTHLY INLINE (for analysis panel)
+// ══════════════════════════════════════
+// renderMonthlyInline removed — replaced by renderMonthlyPage for the dedicated Monthly tab
 
+// ══════════════════════════════════════
+// LINE GRAPHS — PURE SVG
+// ══════════════════════════════════════
+function renderLineGraphs(){
+  const H=160,padL=28,padR=8,padT=16,padB=28;
 
+  // Build last 30 days
+  const today=new Date();today.setHours(0,0,0,0);
+  const days30=[];
+  for(let i=29;i>=0;i--){
+    const d=new Date(today);d.setDate(today.getDate()-i);
+    days30.push(d.toISOString().split('T')[0]);
+  }
+  const matchMap={};
+  matches.forEach(m=>{matchMap[m.date]=m;});
+  const hoursArr=days30.map(ds=>matchMap[ds]?matchMap[ds].hours:null);
+  const qArr=days30.map(ds=>matchMap[ds]?matchMap[ds].questions:null);
 
+  function buildGraph(svgId, data, color, unit){
+    const svg=document.getElementById(svgId);
+    if(!svg) return;
+    // Use actual rendered width for true responsiveness
+    const W=Math.max(svg.clientWidth||600, 280);
+    const gW=W-padL-padR,gH=H-padT-padB;
+    svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+    const vals=data.filter(v=>v!==null);
+    if(!vals.length){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="rgba(255,255,255,0.15)" font-family="monospace" font-size="11">No data yet — log some matches!</text>`;return;}
+    const mx=Math.max(...vals,1),mn=0;
+    const range=mx-mn||1;
+    const xStep=gW/(days30.length-1);
+
+    const pts=days30.map((ds,i)=>{
+      if(data[i]===null) return null;
+      const x=padL+i*xStep;
+      const y=padT+gH-(((data[i]-mn)/range)*gH);
+      return {x,y,v:data[i],ds};
+    });
+
+    function catmullRom(pts){
+      const valid=pts.filter(Boolean);
+      if(valid.length<2) return `M${valid.map(p=>`${p.x},${p.y}`).join(' L')}`;
+      let d=`M${valid[0].x},${valid[0].y}`;
+      for(let i=0;i<valid.length-1;i++){
+        const p0=valid[Math.max(0,i-1)],p1=valid[i],p2=valid[i+1],p3=valid[Math.min(valid.length-1,i+2)];
+        const cp1x=p1.x+(p2.x-p0.x)/6,cp1y=p1.y+(p2.y-p0.y)/6;
+        const cp2x=p2.x-(p3.x-p1.x)/6,cp2y=p2.y-(p3.y-p1.y)/6;
+        d+=` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+      }
+      return d;
+    }
+
+    const validPts=pts.filter(Boolean);
+    let pathD=catmullRom(validPts);
+    const fillD=pathD+` L${validPts[validPts.length-1].x},${padT+gH} L${validPts[0].x},${padT+gH} Z`;
+
+    const grids=[0,0.5,1].map(f=>{
+      const yg=padT+gH-f*gH;
+      const val=Math.round(mn+f*range);
+      return `<line x1="${padL}" y1="${yg}" x2="${W-padR}" y2="${yg}" stroke="rgba(255,255,255,0.04)" stroke-width="0.5"/>
+      <text x="${padL-3}" y="${yg+3}" text-anchor="end" fill="rgba(255,255,255,0.25)" font-family="monospace" font-size="8">${val}${unit}</text>`;
+    }).join('');
+
+    const xLabels=days30.map((ds,i)=>{
+      if(i%5!==0&&i!==29) return '';
+      const x=padL+i*xStep;
+      const d=new Date(ds+'T00:00:00');
+      const label=d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+      return `<text x="${x}" y="${H-4}" text-anchor="middle" fill="rgba(255,255,255,0.22)" font-family="monospace" font-size="7.5">${label}</text>`;
+    }).join('');
+
+    const dots=pts.map((p,i)=>{
+      if(!p) return '';
+      const isToday=(i===29);
+      return `
+        <circle cx="${p.x}" cy="${p.y}" r="${isToday?4:3}" fill="${color}" stroke="var(--bg)" stroke-width="1.5" opacity="0.9"/>
+        <circle cx="${p.x}" cy="${p.y}" r="10" fill="transparent"
+          onmouseenter="showGraphTip(event,'${p.v}${unit} · ${p.ds}')"
+          ontouchstart="showGraphTip(event,'${p.v}${unit} · ${p.ds}')"
+          onmouseleave="hideGraphTip()" ontouchend="hideGraphTip()"/>
+      `;
+    }).join('');
+
+    const gradId='grad-'+svgId;
+    svg.innerHTML=`
+      <defs>
+        <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0.01"/>
+        </linearGradient>
+      </defs>
+      ${grids}
+      ${xLabels}
+      <path d="${fillD}" fill="url(#${gradId})"/>
+      <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${dots}
+    `;
+  }
+
+  // Small delay to ensure SVG is rendered in DOM and has a width
+  setTimeout(()=>{
+    buildGraph('graph-hours', hoursArr, 'var(--fire2)', 'h');
+    buildGraph('graph-questions', qArr, 'var(--cyan)', 'Q');
+  }, 50);
+}
+
+// Graph tooltip
+(function(){
+  const tip=document.createElement('div');
+  tip.id='graph-tip';
+  tip.style.cssText='position:fixed;display:none;background:var(--card2);border:0.5px solid var(--border2);border-radius:6px;padding:4px 10px;font-family:monospace;font-size:10px;color:var(--text);pointer-events:none;z-index:400;white-space:nowrap';
+  document.body.appendChild(tip);
+  window.showGraphTip=function(e,txt){
+    tip.textContent=txt;tip.style.display='block';
+    const ev=e.touches?e.touches[0]:e;
+    tip.style.left=(ev.clientX+10)+'px';tip.style.top=(ev.clientY-28)+'px';
+  };
+  window.hideGraphTip=function(){tip.style.display='none';};
+})();
+
+// Heatmap tooltip
+(function(){
+  const tip=document.createElement('div');
+  tip.id='hm-tip';
+  tip.style.cssText='position:fixed;display:none;background:var(--card2);border:0.5px solid var(--border2);border-radius:6px;padding:5px 10px;font-family:monospace;font-size:10px;color:var(--text);pointer-events:none;z-index:400;white-space:pre;max-width:220px;word-break:break-word;white-space:normal';
+  document.body.appendChild(tip);
+  window.showHmTip=function(e,el){
+    tip.textContent=el.dataset.tip||'';tip.style.display='block';
+    const ev=e.touches?e.touches[0]:e;
+    tip.style.left=(ev.clientX+10)+'px';tip.style.top=(ev.clientY-40)+'px';
+  };
+  window.hideHmTip=function(){tip.style.display='none';};
+})();
 
 // ══════════════════════════════════════
 // INIT
