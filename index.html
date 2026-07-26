@@ -1058,8 +1058,13 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .test-progress-track{height:7px;background:rgba(255,255,255,0.04);border:0.5px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:1rem}
 .test-progress-fill{height:100%;background:linear-gradient(90deg,var(--green),#1f8a5e);width:0%;transition:width .5s ease}
 
-.test-add-btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;padding:6px 14px;background:rgba(245,200,66,0.08);border:0.5px solid var(--gold);border-radius:8px;color:var(--gold);cursor:pointer;transition:all .2s;white-space:nowrap}
-.test-add-btn:hover{background:rgba(245,200,66,0.16)}
+.test-fab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--gold);color:var(--bg);border:none;font-size:26px;font-weight:400;line-height:1;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;transition:transform .15s,background .15s;z-index:210}
+.test-fab:hover{transform:scale(1.06);background:var(--gold2)}
+.test-fab:active{transform:scale(.94)}
+@media(max-width:700px){.test-fab{bottom:76px;right:18px}}
+
+.test-edit-btn{flex:0 0 auto;background:transparent;border:0.5px solid var(--border);color:var(--blue);width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1}
+.test-edit-btn:hover{background:var(--blue);color:var(--text)}
 
 .test-row{background:var(--card);border:0.5px solid var(--border);border-left:3px solid var(--border2);border-radius:10px;margin-bottom:.6rem;overflow:hidden;transition:border-color .2s}
 .test-row.t-cleared{border-left-color:var(--green)}
@@ -2093,9 +2098,8 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 
 <!-- ══ PAGE: TEST LEDGER ══ -->
 <div class="page" id="page-test">
-  <div class="section-title" style="justify-content:space-between">
+  <div class="section-title">
     <span>🎯 Test Ledger</span>
-    <button class="test-add-btn" onclick="openTestModal()">+ Add Test</button>
   </div>
 
   <div class="subtab-bar">
@@ -2130,14 +2134,16 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
     <div class="perf-breakdown-title">💻 Online Breakdown</div>
     <div id="testPerfOnline"></div>
   </div>
+
+  <button class="test-fab" onclick="openTestModal()" title="Add a test" aria-label="Add a test">+</button>
 </div>
 
-<!-- ADD TEST MODAL -->
+<!-- ADD/EDIT TEST MODAL -->
 <div class="modal-overlay" id="testModalOverlay" onclick="if(event.target===this)closeTestModal()">
   <div class="modal-box" style="max-height:88vh">
     <button class="modal-close" onclick="closeTestModal()">✕</button>
-    <div class="modal-title">Add a Test</div>
-    <div class="modal-sub">Custom tests are added to your ledger</div>
+    <div class="modal-title" id="tf-modal-title">Add a Test</div>
+    <div class="modal-sub" id="tf-modal-sub">Custom tests are added to your ledger</div>
     <div style="overflow-y:auto;display:flex;flex-direction:column;gap:.75rem;padding-right:2px">
       <div class="test-field" style="width:100%">
         <label>Test name *</label>
@@ -2177,7 +2183,10 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
       </div>
       <div class="test-field" style="width:100%">
         <label>Pattern</label>
-        <input type="text" id="tf-pattern" class="modal-search" style="margin-bottom:0;width:100%" placeholder="e.g. JEE Advanced">
+        <select id="tf-pattern" class="modal-search" style="margin-bottom:0;width:100%">
+          <option value="JEE Advanced">JEE Advanced</option>
+          <option value="JEE Main">JEE Main</option>
+        </select>
       </div>
       <div class="test-field" style="width:100%">
         <label>Syllabus / details</label>
@@ -2186,7 +2195,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
     </div>
     <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem">
       <button class="confirm-btn cancel" onclick="closeTestModal()">CANCEL</button>
-      <button class="confirm-btn danger" style="background:rgba(245,200,66,0.12);border-color:var(--gold);color:var(--gold)" onclick="saveTestModal()">ADD TEST</button>
+      <button class="confirm-btn danger" id="tf-save-btn" style="background:rgba(245,200,66,0.12);border-color:var(--gold);color:var(--gold)" onclick="saveTestModal()">ADD TEST</button>
     </div>
   </div>
 </div>
@@ -2427,6 +2436,7 @@ const COMM_STORE   = 'shiva45_commentary_v4';
 const HABIT_STORE  = 'shiva45_habits_v1';
 const TEST_ENTRIES_STORE = 'shiva45_test_entries_v1';
 const TEST_CUSTOM_STORE  = 'shiva45_test_custom_v1';
+const TEST_OVERRIDES_STORE = 'shiva45_test_overrides_v1';
 
 const DEFAULT_HABITS = [
   { emoji:'💧', name:'Water',        pts:8  },
@@ -2472,6 +2482,8 @@ let lastCommentary = localStorage.getItem(COMM_STORE) || '';
 let drOpenPlayer   = null;
 let testEntries    = JSON.parse(localStorage.getItem(TEST_ENTRIES_STORE) || '{}');
 let testCustom     = JSON.parse(localStorage.getItem(TEST_CUSTOM_STORE) || '[]');
+let testOverrides  = JSON.parse(localStorage.getItem(TEST_OVERRIDES_STORE) || '{}');
+let editingTestId  = null;
 let testFilter     = 'All';
 let activeTestSub  = 'schedule';
 
@@ -2573,6 +2585,7 @@ async function saveToFirestore() {
       habitConfig  : getHabitConfig(),
       testEntries  : testEntries || {},
       testCustom   : testCustom  || [],
+      testOverrides: testOverrides || {},
       lastSaved    : new Date().toISOString()
     }, { merge: true });
   } catch (e) {
@@ -2647,6 +2660,10 @@ async function loadFromFirestore(uid) {
         if (data.testCustom && Array.isArray(data.testCustom)) {
           testCustom = data.testCustom;
           localStorage.setItem(TEST_CUSTOM_STORE, JSON.stringify(testCustom));
+        }
+        if (data.testOverrides) {
+          testOverrides = data.testOverrides;
+          localStorage.setItem(TEST_OVERRIDES_STORE, JSON.stringify(testOverrides));
         }
         if (activeTab === null && document.getElementById('page-test') && document.getElementById('page-test').classList.contains('active')) {
           renderTestSchedule(); renderTestPerformance();
@@ -6259,7 +6276,14 @@ const BASE_TESTS = [
    physics:'Cumulative of Online Minor Test-6 to 10', chemistry:'Cumulative of Online Minor Test-6 to 10', maths:'Cumulative of Online Minor Test-6 to 10'},
 ];
 
-function getAllTests(){ return BASE_TESTS.concat(testCustom); }
+function getAllTests(){
+  return BASE_TESTS.concat(testCustom).map(t => testOverrides[t.id] ? {...t, ...testOverrides[t.id]} : t);
+}
+function stripTags(s){ return (s||'').replace(/<[^>]+>/g,''); }
+function testSyllabusPlainText(test){
+  if(test.syllabus) return stripTags(test.syllabus.replace(/<br\s*\/?>/gi,'\n'));
+  return `Physics: ${stripTags(test.physics||'')}\nChemistry: ${stripTags(test.chemistry||'')}\nMaths: ${stripTags(test.maths||'')}`;
+}
 
 function fmtTestDate(d){
   const dt = new Date(d+'T00:00:00');
@@ -6289,7 +6313,12 @@ function buildTestFilters(){
   const opts = ['All',...TEST_PHASES];
   el.innerHTML = opts.map(o=>`<button class="filter-btn ${o===testFilter?'active':''}" data-tf="${o}">${o}</button>`).join('');
   el.querySelectorAll('.filter-btn').forEach(b=>{
-    b.addEventListener('click', ()=>{ testFilter = b.dataset.tf; renderTestSchedule(); });
+    b.addEventListener('click', ()=>{
+      testFilter = b.dataset.tf;
+      el.querySelectorAll('.filter-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      renderTestSchedule();
+    });
   });
 }
 
@@ -6337,6 +6366,7 @@ function renderTestSchedule(){
             </div>
           </div>
           <div class="test-stamp ${status}">${testStampLabel(status)}</div>
+          <button class="test-edit-btn" data-tedit="${test.id}" title="Edit test">✎</button>
           ${test.isCustom?`<button class="test-del-btn" data-tdel="${test.id}" title="Delete test">✕</button>`:''}
           <div class="test-chev">▸</div>
         </div>
@@ -6365,7 +6395,7 @@ function renderTestSchedule(){
       sectionsEl.appendChild(row);
 
       row.querySelector('.test-row-head').addEventListener('click', (ev)=>{
-        if(ev.target.closest('[data-tcheck]') || ev.target.closest('[data-tdel]')) return;
+        if(ev.target.closest('[data-tcheck]') || ev.target.closest('[data-tdel]') || ev.target.closest('[data-tedit]')) return;
         row.classList.toggle('open');
       });
       row.querySelector('[data-tcheck]').addEventListener('click', (ev)=>{
@@ -6375,6 +6405,10 @@ function renderTestSchedule(){
         saveTestState();
         renderTestSchedule();
         updateTestStats();
+      });
+      row.querySelector('[data-tedit]').addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        openTestModal(test.id);
       });
       const delBtn = row.querySelector('[data-tdel]');
       if(delBtn){
@@ -6502,22 +6536,50 @@ function switchTestSub(sub){
 function saveTestState(){
   localStorage.setItem(TEST_ENTRIES_STORE, JSON.stringify(testEntries));
   localStorage.setItem(TEST_CUSTOM_STORE, JSON.stringify(testCustom));
+  localStorage.setItem(TEST_OVERRIDES_STORE, JSON.stringify(testOverrides));
   saveToFirestore(); // ☁️ sync to Firebase
 }
 
 // ── Add Test Modal ──
-function openTestModal(){
+function openTestModal(editId){
+  editingTestId = editId || null;
+  const titleEl = document.getElementById('tf-modal-title');
+  const subEl   = document.getElementById('tf-modal-sub');
+  const saveBtn = document.getElementById('tf-save-btn');
+
+  if(editingTestId){
+    const test = getAllTests().find(t=>t.id===editingTestId);
+    if(!test) return;
+    titleEl.textContent = 'Edit Test';
+    subEl.textContent   = test.isCustom ? 'Editing your custom test' : 'Editing schedule details (syllabus, mode, pattern etc.)';
+    saveBtn.textContent = 'SAVE CHANGES';
+    document.getElementById('tf-name').value = test.name;
+    document.getElementById('tf-date').value = test.date;
+    document.getElementById('tf-phase').value = test.phase;
+    document.getElementById('tf-track').value = test.track;
+    document.getElementById('tf-mode').value = test.mode;
+    document.getElementById('tf-pattern').value = /main/i.test(test.pattern||'') ? 'JEE Main' : 'JEE Advanced';
+    document.getElementById('tf-syllabus').value = testSyllabusPlainText(test);
+  } else {
+    titleEl.textContent = 'Add a Test';
+    subEl.textContent   = 'Custom tests are added to your ledger';
+    saveBtn.textContent = 'ADD TEST';
+    document.getElementById('tf-name').value='';
+    document.getElementById('tf-date').value='';
+    document.getElementById('tf-phase').value='Minor';
+    document.getElementById('tf-track').value='DLP';
+    document.getElementById('tf-mode').value='Pen Paper';
+    document.getElementById('tf-pattern').value='JEE Advanced';
+    document.getElementById('tf-syllabus').value='';
+  }
+
   document.getElementById('testModalOverlay').classList.add('show');
-  document.getElementById('tf-name').value='';
-  document.getElementById('tf-date').value='';
-  document.getElementById('tf-phase').value='Minor';
-  document.getElementById('tf-track').value='DLP';
-  document.getElementById('tf-mode').value='Pen Paper';
-  document.getElementById('tf-pattern').value='';
-  document.getElementById('tf-syllabus').value='';
   setTimeout(()=>document.getElementById('tf-name').focus(), 50);
 }
-function closeTestModal(){ document.getElementById('testModalOverlay').classList.remove('show'); }
+function closeTestModal(){
+  document.getElementById('testModalOverlay').classList.remove('show');
+  editingTestId = null;
+}
 
 function saveTestModal(){
   const name = document.getElementById('tf-name').value.trim();
@@ -6525,7 +6587,7 @@ function saveTestModal(){
   const phase = document.getElementById('tf-phase').value;
   const track = document.getElementById('tf-track').value;
   const mode = document.getElementById('tf-mode').value;
-  const pattern = document.getElementById('tf-pattern').value.trim();
+  const pattern = document.getElementById('tf-pattern').value;
   const syllabusRaw = document.getElementById('tf-syllabus').value.trim();
 
   if(!name || !date){
@@ -6533,18 +6595,33 @@ function saveTestModal(){
     return;
   }
 
-  const id = 'custom-' + Date.now();
-  testCustom.push({
-    id, track, phase, mode, name, date, pattern,
-    syllabus: syllabusRaw ? syllabusRaw.replace(/\n/g,'<br>') : '',
-    isCustom: true
-  });
-  saveTestState();
-  closeTestModal();
-  testFilter = 'All';
-  buildTestFilters();
-  renderTestSchedule();
-  showToast('Test added.', true);
+  const payload = {
+    track, phase, mode, name, date, pattern,
+    syllabus: syllabusRaw ? syllabusRaw.replace(/\n/g,'<br>') : ''
+  };
+
+  if(editingTestId){
+    const customIdx = testCustom.findIndex(t=>t.id===editingTestId);
+    if(customIdx > -1){
+      testCustom[customIdx] = {...testCustom[customIdx], ...payload};
+    } else {
+      testOverrides[editingTestId] = payload;
+    }
+    saveTestState();
+    closeTestModal();
+    renderTestSchedule();
+    renderTestPerformance();
+    showToast('Test updated.', true);
+  } else {
+    const id = 'custom-' + Date.now();
+    testCustom.push({ id, ...payload, isCustom: true });
+    saveTestState();
+    closeTestModal();
+    testFilter = 'All';
+    buildTestFilters();
+    renderTestSchedule();
+    showToast('Test added.', true);
+  }
 }
 </script>
 </body>
