@@ -102,11 +102,12 @@ body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-
 }
 .sidebar-appname{
   font-family:'Bebas Neue',sans-serif;font-size:17px;
-  color:var(--gold);letter-spacing:2px;
+  color:#eef2f7;letter-spacing:2px;
   white-space:nowrap;opacity:0;
   transition:opacity .18s;pointer-events:none;
   flex:1;
 }
+.sidebar-appname .sa-264{color:var(--gold);}
 .sidebar.expanded .sidebar-appname{opacity:1;}
 .sidebar-close-btn{
   display:flex;align-items:center;justify-content:center;
@@ -235,9 +236,10 @@ body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--text);min-
 .hamburger:hover{color:var(--text);background:rgba(255,255,255,0.05);}
 .top-bar-title{
   font-family:'Bebas Neue',sans-serif;font-size:20px;
-  color:var(--gold);letter-spacing:2px;flex:1;
+  color:#eef2f7;letter-spacing:2px;flex:1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
+.top-bar-title .tb-264{color:var(--gold);}
 /* Mobile profile avatar button */
 .top-bar-profile-btn{
   display:flex;align-items:center;justify-content:center;
@@ -1331,6 +1333,15 @@ html.g264-fonts-ready #g264-gate .g264-wordmark, html.g264-fonts-ready #g264-spl
   #g264-gate .opening-right svg{width:100%;height:auto;max-width:300px;max-height:none;aspect-ratio:auto;object-fit:initial;}
   #g264-gate .opening-left{padding:8px 28px 48px;align-items:center;text-align:center;}
   #g264-gate .opening-sub{max-width:none;}
+  #g264-gate .opening-eyebrow{font-size:9.5px;letter-spacing:1.5px;justify-content:center;white-space:nowrap;}
+  #g264-gate .opening-eyebrow::before{width:14px;margin-right:8px;}
+  #g264-gate .opening-eyebrow b{margin-left:4px;}
+  #g264-gate .glabel{font-size:22px;}
+  #g264-gate .glabel.final{font-size:24px;}
+}
+@media (max-width:380px){
+  #g264-gate .opening-eyebrow{font-size:8.5px;letter-spacing:1px;}
+  #g264-gate .opening-eyebrow::before{width:10px;margin-right:6px;}
 }
 </style>
 
@@ -1339,7 +1350,7 @@ html.g264-fonts-ready #g264-gate .g264-wordmark, html.g264-fonts-ready #g264-spl
 <div id="g264-gate">
   <div class="opening">
     <div class="opening-left">
-      <div class="opening-eyebrow">ODIfication<b>Academics</b></div>
+      <div class="opening-eyebrow">MODIfication<b>Academics</b></div>
       <div class="opening-hero g264-wordmark">
         <span class="g-goal">GOAL</span><span class="g-264">264</span>
       </div>
@@ -1528,7 +1539,7 @@ html.g264-fonts-ready #g264-gate .g264-wordmark, html.g264-fonts-ready #g264-spl
       <rect x="2" y="12.5" width="14" height="1.5" rx=".75" fill="currentColor"/>
     </svg>
   </button>
-  <div class="top-bar-title" id="top-bar-player-name">GOAL<span style="color:var(--fire)">264</span></div>
+  <div class="top-bar-title" id="top-bar-player-name">GOAL<span class="tb-264">264</span></div>
   <div class="top-bar-profile-btn" id="top-bar-avatar" onclick="toggleProfileModal()" title="Profile">P</div>
 </div>
 
@@ -1538,7 +1549,7 @@ html.g264-fonts-ready #g264-gate .g264-wordmark, html.g264-fonts-ready #g264-spl
 <aside class="sidebar" id="sidebar">
   <!-- App name header -->
   <div class="sidebar-header">
-    <span class="sidebar-appname">GOAL<span style="color:var(--fire)">264</span></span>
+    <span class="sidebar-appname">GOAL<span class="sa-264">264</span></span>
     <button class="sidebar-close-btn" id="sidebar-toggle-btn" onclick="toggleExpand()" title="Toggle sidebar">
       <!-- icon swaps via JS -->
       <svg id="sidebar-toggle-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -1597,7 +1608,7 @@ html.g264-fonts-ready #g264-gate .g264-wordmark, html.g264-fonts-ready #g264-spl
       <button class="profile-row-btn" onclick="showTab('profile',null)">
         <div class="auth-avatar" id="auth-avatar-icon-exp">👤</div>
         <div style="flex:1;min-width:0">
-          <div class="auth-user-name" id="auth-user-name">GOAL264</div>
+          <div class="auth-user-name" id="auth-user-name"><span style="font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:#eef2f7">GOAL<span style="color:var(--gold)">264</span></span></div>
           <div class="auth-user-sub" id="auth-user-sub">Tap to manage profile</div>
         </div>
       </button>
@@ -2520,11 +2531,17 @@ function showAuthUI(user) {
   const subEl  = document.getElementById('auth-user-sub');
   const mobileNameEl = document.getElementById('top-bar-player-name');
 
-  if (nameEl) nameEl.textContent = displayName;
+  if (nameEl) {
+    if (displayName === 'GOAL264') {
+      nameEl.innerHTML = '<span style="font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;color:#eef2f7">GOAL<span style="color:var(--gold)">264</span></span>';
+    } else {
+      nameEl.textContent = displayName;
+    }
+  }
   if (subEl)  subEl.textContent  = user ? 'Tap to manage profile' : 'Tap to sign in';
   if (mobileNameEl) {
     if (displayName === 'GOAL264') {
-      mobileNameEl.innerHTML = 'GOAL<span style="color:var(--fire)">264</span>';
+      mobileNameEl.innerHTML = 'GOAL<span class="tb-264">264</span>';
     } else {
       mobileNameEl.textContent = displayName;
     }
@@ -4361,6 +4378,7 @@ function renderMonthlyPage(){
 
     const isMobile = window.innerWidth < 500;
     const tickStep = isMobile ? 4 : (window.innerWidth < 768 ? 3 : 2);
+    const axisFontSize = isMobile ? 12 : 9;
 
     _monthlyChart = new Chart(ctx, {
       type: 'line',
@@ -4419,7 +4437,7 @@ function renderMonthlyPage(){
             border: { color: 'transparent' },
             ticks: {
               color: 'rgba(106,128,160,0.75)',
-              font: { family:"'DM Mono',monospace", size: 9 },
+              font: { family:"'DM Mono',monospace", size: axisFontSize },
               maxRotation: 0,
               autoSkip: false,
               callback(val, idx) {
@@ -4435,7 +4453,7 @@ function renderMonthlyPage(){
             border: { color: 'transparent' },
             ticks: {
               color: 'rgba(106,128,160,0.75)',
-              font: { family:"'DM Mono',monospace", size: 9 },
+              font: { family:"'DM Mono',monospace", size: axisFontSize },
               maxTicksLimit: 5,
               callback: v => v === 0 ? '0' : v + 'Q'
             },
