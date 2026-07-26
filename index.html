@@ -1063,6 +1063,27 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .test-fab:active{transform:scale(.94)}
 @media(max-width:700px){.test-fab{bottom:76px;right:18px}}
 
+.test-cd-btn{flex:0 0 auto;background:transparent;border:0.5px solid var(--border);color:var(--gold);width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1}
+.test-cd-btn:hover{background:var(--gold);color:var(--bg)}
+.test-cd-btn.is-target{background:rgba(245,200,66,0.18);border-color:var(--gold)}
+
+.tcd-card{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:1.75rem 1.25rem;text-align:center;transition:border-color .3s}
+.tcd-card.urgent{border-color:var(--red);animation:tcdPulse 1.6s infinite}
+@keyframes tcdPulse{0%,100%{box-shadow:0 0 0 0 rgba(224,80,80,0.35)}50%{box-shadow:0 0 0 10px rgba(224,80,80,0)}}
+.tcd-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border:0.5px solid var(--border2);border-radius:20px;padding:3px 10px;margin-bottom:.75rem}
+.tcd-name{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:var(--gold)}
+.tcd-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:4px}
+.tcd-blocks{display:flex;justify-content:center;gap:1rem;margin:1.5rem 0 1rem;flex-wrap:wrap}
+.tcd-block{background:rgba(255,255,255,0.04);border:0.5px solid var(--border);border-radius:10px;padding:1rem 1.5rem;min-width:84px}
+.tcd-num{font-family:'Bebas Neue',sans-serif;font-size:38px;line-height:1;color:var(--text)}
+.tcd-block.days .tcd-num{color:var(--fire2)}
+.tcd-block.hrs .tcd-num{color:var(--gold)}
+.tcd-block.mins .tcd-num{color:var(--muted)}
+.tcd-unit{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-top:6px}
+.tcd-reset{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;padding:6px 14px;background:none;border:0.5px solid var(--border);border-radius:8px;color:var(--muted2);cursor:pointer;margin-top:.5rem}
+.tcd-reset:hover{border-color:var(--gold);color:var(--gold)}
+@media(max-width:560px){.tcd-num{font-size:28px}.tcd-block{padding:.75rem 1rem;min-width:64px}}
+
 .test-edit-btn{flex:0 0 auto;background:transparent;border:0.5px solid var(--border);color:var(--blue);width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1}
 .test-edit-btn:hover{background:var(--blue);color:var(--text)}
 
@@ -2105,6 +2126,7 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
   <div class="subtab-bar">
     <button class="subtab-btn active" id="testsub-schedule" onclick="switchTestSub('schedule')">Schedule</button>
     <button class="subtab-btn" id="testsub-performance" onclick="switchTestSub('performance')">Performance</button>
+    <button class="subtab-btn" id="testsub-countdown" onclick="switchTestSub('countdown')">Countdown</button>
   </div>
 
   <!-- SCHEDULE SUB-TAB -->
@@ -2133,6 +2155,11 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
     <div id="testPerfDLP"></div>
     <div class="perf-breakdown-title">💻 Online Breakdown</div>
     <div id="testPerfOnline"></div>
+  </div>
+
+  <!-- COUNTDOWN SUB-TAB -->
+  <div class="subtab-panel" id="testpanel-countdown">
+    <div id="testCountdownCard"></div>
   </div>
 
   <button class="test-fab" onclick="openTestModal()" title="Add a test" aria-label="Add a test">+</button>
@@ -2437,6 +2464,7 @@ const HABIT_STORE  = 'shiva45_habits_v1';
 const TEST_ENTRIES_STORE = 'shiva45_test_entries_v1';
 const TEST_CUSTOM_STORE  = 'shiva45_test_custom_v1';
 const TEST_OVERRIDES_STORE = 'shiva45_test_overrides_v1';
+const TEST_COUNTDOWN_STORE = 'shiva45_test_countdown_id_v1';
 
 const DEFAULT_HABITS = [
   { emoji:'💧', name:'Water',        pts:8  },
@@ -2483,6 +2511,7 @@ let drOpenPlayer   = null;
 let testEntries    = JSON.parse(localStorage.getItem(TEST_ENTRIES_STORE) || '{}');
 let testCustom     = JSON.parse(localStorage.getItem(TEST_CUSTOM_STORE) || '[]');
 let testOverrides  = JSON.parse(localStorage.getItem(TEST_OVERRIDES_STORE) || '{}');
+let testCountdownId = localStorage.getItem(TEST_COUNTDOWN_STORE) || null;
 let editingTestId  = null;
 let testFilter     = 'All';
 let activeTestSub  = 'schedule';
@@ -2586,6 +2615,7 @@ async function saveToFirestore() {
       testEntries  : testEntries || {},
       testCustom   : testCustom  || [],
       testOverrides: testOverrides || {},
+      testCountdownId: testCountdownId || null,
       lastSaved    : new Date().toISOString()
     }, { merge: true });
   } catch (e) {
@@ -2664,6 +2694,11 @@ async function loadFromFirestore(uid) {
         if (data.testOverrides) {
           testOverrides = data.testOverrides;
           localStorage.setItem(TEST_OVERRIDES_STORE, JSON.stringify(testOverrides));
+        }
+        if (typeof data.testCountdownId !== 'undefined') {
+          testCountdownId = data.testCountdownId;
+          if (testCountdownId) localStorage.setItem(TEST_COUNTDOWN_STORE, testCountdownId);
+          else localStorage.removeItem(TEST_COUNTDOWN_STORE);
         }
         if (activeTab === null && document.getElementById('page-test') && document.getElementById('page-test').classList.contains('active')) {
           renderTestSchedule(); renderTestPerformance();
@@ -4801,7 +4836,7 @@ function refreshAll(){
   renderWeekOfYearBadge();
   renderCapCards();
   renderPeakInsight();
-  if(document.getElementById('page-test')){ buildTestFilters(); renderTestSchedule(); renderTestPerformance(); }
+  if(document.getElementById('page-test')){ buildTestFilters(); renderTestSchedule(); renderTestPerformance(); renderTestCountdown(); }
 }
 
 // ══════════════════════════════════════
@@ -6366,6 +6401,7 @@ function renderTestSchedule(){
             </div>
           </div>
           <div class="test-stamp ${status}">${testStampLabel(status)}</div>
+          <button class="test-cd-btn ${testCountdownId===test.id?'is-target':''}" data-tcd="${test.id}" title="Set as countdown target">🎯</button>
           <button class="test-edit-btn" data-tedit="${test.id}" title="Edit test">✎</button>
           ${test.isCustom?`<button class="test-del-btn" data-tdel="${test.id}" title="Delete test">✕</button>`:''}
           <div class="test-chev">▸</div>
@@ -6395,8 +6431,12 @@ function renderTestSchedule(){
       sectionsEl.appendChild(row);
 
       row.querySelector('.test-row-head').addEventListener('click', (ev)=>{
-        if(ev.target.closest('[data-tcheck]') || ev.target.closest('[data-tdel]') || ev.target.closest('[data-tedit]')) return;
+        if(ev.target.closest('[data-tcheck]') || ev.target.closest('[data-tdel]') || ev.target.closest('[data-tedit]') || ev.target.closest('[data-tcd]')) return;
         row.classList.toggle('open');
+      });
+      row.querySelector('[data-tcd]').addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        setTestCountdown(test.id);
       });
       row.querySelector('[data-tcheck]').addEventListener('click', (ev)=>{
         ev.stopPropagation();
@@ -6531,7 +6571,87 @@ function switchTestSub(sub){
   document.querySelectorAll('.subtab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('testpanel-'+sub).classList.add('active');
   if(sub==='performance') renderTestPerformance();
+  if(sub==='countdown') renderTestCountdown();
 }
+
+// ── Countdown target ──
+function getCountdownTarget(){
+  const all = getAllTests();
+  const today = todayTestISO();
+  if(testCountdownId){
+    const t = all.find(x=>x.id===testCountdownId);
+    const cleared = t && testEntries[t.id] && testEntries[t.id].checked;
+    if(t && !cleared) return {test:t, manual:true};
+  }
+  let next = null;
+  all.forEach(t=>{
+    const cleared = testEntries[t.id] && testEntries[t.id].checked;
+    if(!cleared && t.date >= today && (!next || t.date < next.date)) next = t;
+  });
+  return next ? {test:next, manual:false} : null;
+}
+
+function setTestCountdown(id){
+  testCountdownId = id;
+  localStorage.setItem(TEST_COUNTDOWN_STORE, id);
+  saveToFirestore();
+  renderTestSchedule();
+  const t = getAllTests().find(x=>x.id===id);
+  showToast(`Countdown set to ${t ? t.name : 'test'}.`, true);
+}
+
+function clearTestCountdown(){
+  testCountdownId = null;
+  localStorage.removeItem(TEST_COUNTDOWN_STORE);
+  saveToFirestore();
+  renderTestSchedule();
+  renderTestCountdown();
+  showToast('Countdown reset to next upcoming test.', true);
+}
+
+function renderTestCountdown(){
+  const card = document.getElementById('testCountdownCard');
+  if(!card) return;
+  const result = getCountdownTarget();
+  if(!result){
+    card.innerHTML = `<div class="tcd-card"><div class="tcd-name">🎉 No upcoming tests</div><div class="tcd-date">All tests cleared or none scheduled.</div></div>`;
+    return;
+  }
+  const { test, manual } = result;
+  const targetDate = new Date(test.date+'T09:00:00');
+  const diff = targetDate - new Date();
+  const urgent = diff > 0 && diff <= 3*24*60*60*1000;
+
+  if(diff <= 0){
+    card.innerHTML = `
+      <div class="tcd-card ${urgent?'urgent':''}">
+        <div class="tcd-badge">${manual?'📌 Manually selected':'🔄 Next upcoming'}</div>
+        <div class="tcd-name">${test.name}</div>
+        <div class="tcd-date">${fmtTestDate(test.date)} · ${test.track} · ${test.mode}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--red);margin-top:1.25rem">Test day is here — good luck! 🏏</div>
+        ${manual?`<button class="tcd-reset" onclick="clearTestCountdown()">Reset to next upcoming</button>`:''}
+      </div>`;
+    return;
+  }
+
+  const days = Math.floor(diff/(1000*60*60*24));
+  const hrs  = Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+  const mins = Math.floor((diff%(1000*60*60))/(1000*60));
+
+  card.innerHTML = `
+    <div class="tcd-card ${urgent?'urgent':''}">
+      <div class="tcd-badge">${manual?'📌 Manually selected':'🔄 Next upcoming'}</div>
+      <div class="tcd-name">${test.name}</div>
+      <div class="tcd-date">${fmtTestDate(test.date)} · ${test.track} · ${test.mode}</div>
+      <div class="tcd-blocks">
+        <div class="tcd-block days"><div class="tcd-num">${days}</div><div class="tcd-unit">Days</div></div>
+        <div class="tcd-block hrs"><div class="tcd-num">${String(hrs).padStart(2,'0')}</div><div class="tcd-unit">Hrs</div></div>
+        <div class="tcd-block mins"><div class="tcd-num">${String(mins).padStart(2,'0')}</div><div class="tcd-unit">Min</div></div>
+      </div>
+      ${manual?`<button class="tcd-reset" onclick="clearTestCountdown()">Reset to next upcoming</button>`:''}
+    </div>`;
+}
+setInterval(()=>{ if(activeTestSub==='countdown') renderTestCountdown(); }, 60000);
 
 function saveTestState(){
   localStorage.setItem(TEST_ENTRIES_STORE, JSON.stringify(testEntries));
