@@ -1620,11 +1620,8 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
     <button class="sidebar-item" id="si-career" onclick="showPage('career',this)" data-tooltip="Career">
       <span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 3.5l.9 1.8 2 .3-1.45 1.4.34 2-1.79-.94L14.2 9l.34-2L13.1 5.6l2-.3z"/></svg></span><span class="si-label">Career</span>
     </button>
-    <button class="sidebar-item" id="si-race" onclick="showPage('race',this)" data-tooltip="Race Board">
-      <span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span><span class="si-label">Race Board</span>
-    </button>
-    <button class="sidebar-item" id="si-leaderboard" onclick="showPage('leaderboard',this)" data-tooltip="Leaderboard">
-      <span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></span><span class="si-label">Leaderboard</span>
+    <button class="sidebar-item" id="si-race" onclick="showPage('race',this)" data-tooltip="Compete">
+      <span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span><span class="si-label">Compete</span>
     </button>
     <button class="sidebar-item" id="si-best" onclick="showPage('best',this)" data-tooltip="Records">
       <span class="si-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 01-2-2V5h4"/><path d="M18 9h2a2 2 0 002-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/></svg></span><span class="si-label">Records</span>
@@ -1912,73 +1909,82 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 
 </div>
 
-<!-- ══ PAGE: RACE BOARD ══ -->
+<!-- ══ PAGE: COMPETE (Race Board + Leaderboard merged) ══ -->
 <div class="page" id="page-race">
-  <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Career ODI Runs Race</div>
-  <div class="race-board">
-    <div class="race-title">CAREER RUNS RACE</div>
-    <div class="race-sub">Your total vs ODI legends — updated every match</div>
-    <div id="race-rows"></div>
-  </div>
-  <div class="card">
-    <div class="section-title" style="font-size:18px;margin-bottom:.75rem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/></svg>Career Average Race</div>
-    <div class="race-sub" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:1rem">Your average vs their career average (min 5 matches to show yours)</div>
-    <div id="avg-race-rows"></div>
-  </div>
-  <div class="card">
-    <div class="section-title" style="font-size:18px;margin-bottom:.75rem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>Highest Score Race</div>
-    <div class="race-sub" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:1rem">Your personal best vs legends' highest ODI scores</div>
-    <div id="best-race-rows"></div>
-  </div>
-</div>
+  <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Compete</div>
 
-<!-- ══ PAGE: LEADERBOARD ══ -->
-<div class="page" id="page-leaderboard">
-  <div class="lb-header">
-    <div class="lb-title">🌍 GLOBAL LEADERBOARD</div>
-    <div class="lb-sub">Real players competing against ODI legends — who reigns supreme?</div>
-    <div class="lb-meta">
-      <span class="lb-meta-pill lb-meta-users" id="lb-user-count">👤 — players</span>
-      <span class="lb-meta-pill lb-meta-legends">🏏 10 legends</span>
-      <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2)" id="lb-last-updated"></span>
-      <button class="lb-refresh-btn" onclick="renderLeaderboard()">↻ REFRESH</button>
+  <div class="pill-toggle" id="compete-toggle">
+    <button class="pill-btn active" id="compete-toggle-legends" onclick="setCompeteView('legends',this)">vs Legends</button>
+    <button class="pill-btn" id="compete-toggle-global" onclick="setCompeteView('global',this)">Global</button>
+  </div>
+
+  <!-- vs LEGENDS VIEW -->
+  <div id="compete-view-legends">
+    <div class="race-board">
+      <div class="race-title">CAREER RUNS RACE</div>
+      <div class="race-sub">Your total vs ODI legends — updated every match</div>
+      <div id="race-rows"></div>
     </div>
-    <!-- Toggle -->
-    <div class="pill-toggle" style="margin-top:1rem;margin-bottom:0">
-      <button class="pill-btn active" id="lb-toggle-combined" onclick="setLbMode('combined',this)">Players + Legends</button>
-      <button class="pill-btn" id="lb-toggle-players" onclick="setLbMode('players',this)">Players Only</button>
+    <div class="card">
+      <div class="section-title" style="font-size:18px;margin-bottom:.75rem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="14"/></svg>Career Average Race</div>
+      <div class="race-sub" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:1rem">Your average vs their career average (min 5 matches to show yours)</div>
+      <div id="avg-race-rows"></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="font-size:18px;margin-bottom:.75rem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>Highest Score Race</div>
+      <div class="race-sub" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:1rem">Your personal best vs legends' highest ODI scores</div>
+      <div id="best-race-rows"></div>
     </div>
   </div>
 
-  <!-- Full leaderboard table -->
-  <div style="background:var(--card);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.25rem">
-  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
-    <table class="lb-table" style="min-width:380px">
-      <thead>
-        <tr>
-          <th style="width:36px">#</th>
-          <th style="width:36px"></th>
-          <th>Player</th>
-          <th>Runs</th>
-          <th>Avg</th>
-          <th>100s</th>
-          <th>Best</th>
-          <th>M</th>
-          <th style="min-width:80px"></th>
-        </tr>
-      </thead>
-      <tbody id="lb-tbody">
-        <tr><td colspan="9"><div class="lb-loading"><div class="lb-spinner"></div><br>Loading leaderboard…</div></td></tr>
-      </tbody>
-    </table>
-  </div>
-  </div>
+  <!-- GLOBAL LEADERBOARD VIEW -->
+  <div id="compete-view-global" style="display:none">
+    <div class="lb-header">
+      <div class="lb-title">Global Leaderboard</div>
+      <div class="lb-sub">Real players competing against ODI legends — who reigns supreme?</div>
+      <div class="lb-meta">
+        <span class="lb-meta-pill lb-meta-users" id="lb-user-count">👤 — players</span>
+        <span class="lb-meta-pill lb-meta-legends">🏏 10 legends</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2)" id="lb-last-updated"></span>
+        <button class="lb-refresh-btn" onclick="renderLeaderboard()">↻ REFRESH</button>
+      </div>
+      <!-- Toggle -->
+      <div class="pill-toggle" style="margin-top:1rem;margin-bottom:0">
+        <button class="pill-btn active" id="lb-toggle-combined" onclick="setLbMode('combined',this)">Players + Legends</button>
+        <button class="pill-btn" id="lb-toggle-players" onclick="setLbMode('players',this)">Players Only</button>
+      </div>
+    </div>
 
-  <!-- Legend key -->
-  <div style="display:flex;gap:1rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:1px;padding:.5rem 0">
-    <span>👤 Real player</span>
-    <span>🏏 ODI Legend (historical)</span>
-    <span style="color:var(--gold)">★ You</span>
+    <!-- Full leaderboard table -->
+    <div style="background:var(--card);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.25rem">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table class="lb-table" style="min-width:380px">
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th style="width:36px"></th>
+            <th>Player</th>
+            <th>Runs</th>
+            <th>Avg</th>
+            <th>100s</th>
+            <th>Best</th>
+            <th>M</th>
+            <th style="min-width:80px"></th>
+          </tr>
+        </thead>
+        <tbody id="lb-tbody">
+          <tr><td colspan="9"><div class="lb-loading"><div class="lb-spinner"></div><br>Loading leaderboard…</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+
+    <!-- Legend key -->
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:1px;padding:.5rem 0">
+      <span>👤 Real player</span>
+      <span>🏏 ODI Legend (historical)</span>
+      <span style="color:var(--gold)">★ You</span>
+    </div>
   </div>
 </div>
 
@@ -2366,9 +2372,9 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
       <div class="goal-progress"><div class="goal-progress-fill" id="goal-progress-fill" style="width:0%"></div></div>
       <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:5px" id="goal-progress-label"></div>
       <div class="goal-stats">
-        <div class="goal-stat"><div class="goal-stat-val" id="goal-runs-left" style="color:var(--fire)">—</div><div class="goal-stat-label">Runs Left</div></div>
+        <div class="goal-stat"><div class="goal-stat-val" id="goal-runs-left">—</div><div class="goal-stat-label">Runs Left</div></div>
         <div class="goal-stat"><div class="goal-stat-val" id="goal-days-left" style="color:var(--gold)">—</div><div class="goal-stat-label">Days Left</div></div>
-        <div class="goal-stat"><div class="goal-stat-val" id="goal-daily-need" style="color:var(--cyan)">—</div><div class="goal-stat-label">Need/Day</div></div>
+        <div class="goal-stat"><div class="goal-stat-val" id="goal-daily-need">—</div><div class="goal-stat-label">Need/Day</div></div>
       </div>
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:.75rem;padding:.5rem .75rem;background:rgba(255,255,255,0.03);border-radius:6px" id="goal-on-pace"></div>
     </div>
@@ -3515,9 +3521,9 @@ function renderCapCards() {
     ${dateStr ? `<div class="cap-date">Achieved · ${dateStr}</div>` : ''}
     <div class="cap-stats-row">
       <div class="cap-stat"><div class="cap-stat-val" style="color:${cap.colour}">${capAvg}</div><div class="cap-stat-label">Avg at cap</div></div>
-      <div class="cap-stat"><div class="cap-stat-val" style="color:var(--fire)">${capBest}</div><div class="cap-stat-label">Best score</div></div>
-      <div class="cap-stat"><div class="cap-stat-val" style="color:var(--gold)">${capTons}</div><div class="cap-stat-label">Centuries</div></div>
-      <div class="cap-stat"><div class="cap-stat-val" style="color:var(--green)">${capRuns}</div><div class="cap-stat-label">Total runs</div></div>
+      <div class="cap-stat"><div class="cap-stat-val">${capBest}</div><div class="cap-stat-label">Best score</div></div>
+      <div class="cap-stat"><div class="cap-stat-val">${capTons}</div><div class="cap-stat-label">Centuries</div></div>
+      <div class="cap-stat"><div class="cap-stat-val">${capRuns}</div><div class="cap-stat-label">Total runs</div></div>
     </div>
     ${nextLine}
   </div>`;
@@ -4812,8 +4818,7 @@ function showPage(id,btn){
   if(id==='career')      { renderCareer(); renderCapCards(); renderPeakInsight(); }
   if(id==='best')        renderBest();
   if(id==='tracker')     renderTracker();
-  if(id==='race')        renderRaceBoard();
-  if(id==='leaderboard') renderLeaderboard();
+  if(id==='race')        { renderRaceBoard(); if(competeView==='global') renderLeaderboard(); }
   if(id==='test')        { buildTestFilters(); renderTestSchedule(); }
 }
 
@@ -5341,6 +5346,16 @@ const LEGEND_LB = [
   { name:'Sourav Ganguly',   flag:'🇮🇳', runs:11363, avg:41.02, hundreds:22, best:183, matches:311, isLegend:true },
 ];
 
+let competeView = 'legends'; // 'legends' | 'global'
+function setCompeteView(view, btn) {
+  competeView = view;
+  document.getElementById('compete-view-legends').style.display = view === 'legends' ? 'block' : 'none';
+  document.getElementById('compete-view-global').style.display  = view === 'global'  ? 'block' : 'none';
+  document.querySelectorAll('#compete-toggle .pill-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (view === 'global') renderLeaderboard();
+}
+
 let lbMode = 'combined'; // 'combined' | 'players'
 
 function setLbMode(mode, btn) {
@@ -5422,11 +5437,11 @@ async function renderLeaderboard() {
           <div class="lb-detail" id="${detailId}">
             <div class="lb-detail-grid">
               <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--gold)">${p.runs.toLocaleString()}</div><div class="lb-detail-label">Career Runs</div></div>
-              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--green)">${p.avg}</div><div class="lb-detail-label">Average</div></div>
-              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--purple)">${p.hundreds}</div><div class="lb-detail-label">Centuries</div></div>
-              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--cyan)">${p.best}</div><div class="lb-detail-label">Best Score</div></div>
-              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--blue)">${p.matches}</div><div class="lb-detail-label">Matches</div></div>
-              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--fire)">${p.matches>0?(p.hundreds/p.matches*100).toFixed(0)+'%':'—'}</div><div class="lb-detail-label">Century Rate</div></div>
+              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--gold)">${p.avg}</div><div class="lb-detail-label">Average</div></div>
+              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--green)">${p.hundreds}</div><div class="lb-detail-label">Centuries</div></div>
+              <div class="lb-detail-stat"><div class="lb-detail-val">${p.best}</div><div class="lb-detail-label">Best Score</div></div>
+              <div class="lb-detail-stat"><div class="lb-detail-val">${p.matches}</div><div class="lb-detail-label">Matches</div></div>
+              <div class="lb-detail-stat"><div class="lb-detail-val" style="color:var(--green)">${p.matches>0?(p.hundreds/p.matches*100).toFixed(0)+'%':'—'}</div><div class="lb-detail-label">Century Rate</div></div>
             </div>
           </div>
         </td></tr>`;
