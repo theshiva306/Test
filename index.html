@@ -1049,7 +1049,10 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .subtab-panel{display:none}
 .subtab-panel.active{display:block}
 
-.test-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1rem}
+.test-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem}
+#testCountdownCard{margin-bottom:1.25rem}
+#testCountdownCard .tcd-card{padding:1.25rem 1.25rem}
+#testCountdownCard .tcd-blocks{margin:1rem 0 .25rem}
 .test-stat{background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:.75rem .6rem;text-align:center}
 .test-stat .tn{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--text);line-height:1.1}
 .test-stat.next .tn{font-size:12px;color:var(--fire2);font-family:'DM Mono',monospace;line-height:1.3}
@@ -1083,6 +1086,20 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
 .tcd-reset{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;padding:6px 14px;background:none;border:0.5px solid var(--border);border-radius:8px;color:var(--muted2);cursor:pointer;margin-top:.5rem}
 .tcd-reset:hover{border-color:var(--gold);color:var(--gold)}
 @media(max-width:560px){.tcd-num{font-size:28px}.tcd-block{padding:.75rem 1rem;min-width:64px}}
+
+/* HOME TEST REMINDER (compact) */
+.htr-card{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:.9rem 1.1rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;transition:border-color .3s}
+.htr-card.urgent{border-color:var(--red);animation:tcdPulse 1.6s infinite}
+.htr-card.today{border-color:var(--gold)}
+.htr-left{min-width:0}
+.htr-badge{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border:0.5px solid var(--border2);border-radius:20px;padding:2px 8px;display:inline-block;margin-bottom:5px}
+.htr-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.5px;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htr-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px}
+.htr-right{text-align:center;flex-shrink:0}
+.htr-num{font-family:'Bebas Neue',sans-serif;font-size:28px;line-height:1;color:var(--fire2)}
+.htr-num.today{color:var(--red)}
+.htr-unit{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);margin-top:2px}
+.htr-empty{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center}
 
 .test-edit-btn{flex:0 0 auto;background:transparent;border:0.5px solid var(--border);color:var(--blue);width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:12px;line-height:1}
 .test-edit-btn:hover{background:var(--blue);color:var(--text)}
@@ -1694,6 +1711,9 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
     </div>
   </div>
 
+  <!-- TEST REMINDER -->
+  <div id="homeTestReminder"></div>
+
   <!-- WEEKLY TARGET on scoreboard -->
   <div class="target-card">
     <div class="target-row">
@@ -2126,16 +2146,15 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
   <div class="subtab-bar">
     <button class="subtab-btn active" id="testsub-schedule" onclick="switchTestSub('schedule')">Schedule</button>
     <button class="subtab-btn" id="testsub-performance" onclick="switchTestSub('performance')">Performance</button>
-    <button class="subtab-btn" id="testsub-countdown" onclick="switchTestSub('countdown')">Countdown</button>
   </div>
 
   <!-- SCHEDULE SUB-TAB -->
   <div class="subtab-panel active" id="testpanel-schedule">
+    <div id="testCountdownCard"></div>
     <div class="test-stats">
       <div class="test-stat"><div class="tn" id="tstatTotal">0</div><div class="tl">Total Tests</div></div>
       <div class="test-stat"><div class="tn" id="tstatCleared">0</div><div class="tl">Cleared</div></div>
       <div class="test-stat"><div class="tn" id="tstatDue">0</div><div class="tl">Due</div></div>
-      <div class="test-stat next"><div class="tn" id="tstatNext">—</div><div class="tl">Next Test</div></div>
     </div>
     <div class="test-progress-track"><div class="test-progress-fill" id="testProgressFill"></div></div>
 
@@ -2155,11 +2174,6 @@ input[type=number]::-webkit-inner-spin-button{opacity:.3}
     <div id="testPerfDLP"></div>
     <div class="perf-breakdown-title">💻 Online Breakdown</div>
     <div id="testPerfOnline"></div>
-  </div>
-
-  <!-- COUNTDOWN SUB-TAB -->
-  <div class="subtab-panel" id="testpanel-countdown">
-    <div id="testCountdownCard"></div>
   </div>
 
   <button class="test-fab" onclick="openTestModal()" title="Add a test" aria-label="Add a test">+</button>
@@ -4836,6 +4850,7 @@ function refreshAll(){
   renderWeekOfYearBadge();
   renderCapCards();
   renderPeakInsight();
+  renderHomeTestReminder();
   if(document.getElementById('page-test')){ buildTestFilters(); renderTestSchedule(); renderTestPerformance(); renderTestCountdown(); }
 }
 
@@ -6571,7 +6586,6 @@ function switchTestSub(sub){
   document.querySelectorAll('.subtab-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('testpanel-'+sub).classList.add('active');
   if(sub==='performance') renderTestPerformance();
-  if(sub==='countdown') renderTestCountdown();
 }
 
 // ── Countdown target ──
@@ -6651,7 +6665,52 @@ function renderTestCountdown(){
       ${manual?`<button class="tcd-reset" onclick="clearTestCountdown()">Reset to next upcoming</button>`:''}
     </div>`;
 }
-setInterval(()=>{ if(activeTestSub==='countdown') renderTestCountdown(); }, 60000);
+setInterval(()=>{ if(activeTestSub==='schedule') renderTestCountdown(); renderHomeTestReminder(); }, 60000);
+
+function renderHomeTestReminder(){
+  const box = document.getElementById('homeTestReminder');
+  if(!box) return;
+  const result = getCountdownTarget();
+  if(!result){
+    box.innerHTML = `<div class="htr-card"><div class="htr-empty">🎉 No upcoming tests scheduled</div></div>`;
+    return;
+  }
+  const { test } = result;
+  const today = todayTestISO();
+  const targetDate = new Date(test.date+'T09:00:00');
+  const diffDays = Math.ceil((targetDate - new Date())/(1000*60*60*24));
+  const isToday = test.date === today;
+  const urgent = !isToday && diffDays > 0 && diffDays <= 3;
+
+  if(isToday){
+    box.innerHTML = `
+      <div class="htr-card today">
+        <div class="htr-left">
+          <div class="htr-badge">📅 Today</div>
+          <div class="htr-name">${test.name}</div>
+          <div class="htr-date">${test.track} · ${test.mode}</div>
+        </div>
+        <div class="htr-right">
+          <div class="htr-num today">🏏</div>
+          <div class="htr-unit">Good luck!</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="htr-card ${urgent?'urgent':''}">
+      <div class="htr-left">
+        <div class="htr-badge">⏳ Next Test</div>
+        <div class="htr-name">${test.name}</div>
+        <div class="htr-date">${fmtTestDate(test.date)} · ${test.track}</div>
+      </div>
+      <div class="htr-right">
+        <div class="htr-num">${diffDays}</div>
+        <div class="htr-unit">${diffDays===1?'Day':'Days'}</div>
+      </div>
+    </div>`;
+}
 
 function saveTestState(){
   localStorage.setItem(TEST_ENTRIES_STORE, JSON.stringify(testEntries));
